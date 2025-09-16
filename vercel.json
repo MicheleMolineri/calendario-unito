@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/public/index.html"
+    },
+    {
+      "src": "/api/analyze_calendar",
+      "dest": "/api/analyze_calendar.py"
+    },
+    {
+      "src": "/api/generate_calendar",
+      "dest": "/api/generate_calendar.py"
+    },
+    {
+      "src": "/api/download",
+      "dest": "/api/download.py"
+    },
+    {
+      "src": "/api/create_permanent_link",
+      "dest": "/api/create_permanent_link.py"
+    },
+    {
+      "src": "/api/ical/(.*)",
+      "dest": "/api/ical.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/index.html"
+    }
+  ],
+  "functions": {
+    "api/*.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "env": {
+    "PYTHONPATH": "/var/task"
+  }
+}

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📅 Gestore Calendario UNITO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        
+        .header-section {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem;
+            font-weight: 500;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .step.active .step-number {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .url-input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .courses-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .course-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .course-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .course-card.selected {
+            border-color: var(--success-color);
+            background: rgba(25, 135, 84, 0.05);
+        }
+        
+        .course-checkbox {
+            transform: scale(1.3);
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        .download-section {
+            display: none;
+            background: linear-gradient(45deg, #198754, #20c997);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .alert-modern {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-section">
+                <h1 class="mb-3">📅 Gestore Calendario UNITO</h1>
+                <p class="lead mb-0">Filtra e personalizza il tuo calendario universitario</p>
+            </div>
+            
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step-1">
+                    <div class="step-number">1</div>
+                    <span>Inserisci URL</span>
+                </div>
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <span>Seleziona Corsi</span>
+                </div>
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <span>Scarica Calendario</span>
+                </div>
+            </div>
+            
+            <div class="container p-4">
+                <!-- URL Input Section -->
+                <div class="url-input-section" id="url-section">
+                    <h3 class="mb-4"><i class="bi bi-link-45deg"></i> Inserisci URL del Calendario</h3>
+                    
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="mb-3">
+                                <label for="calendar-url" class="form-label">URL del calendario universitario:</label>
+                                <input type="url" 
+                                       class="form-control form-control-lg" 
+                                       id="calendar-url" 
+                                       placeholder="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=..."
+                                       value="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-custom btn-lg" onclick="analyzeCalendar()">
+                                <i class="bi bi-search"></i> Analizza Calendario
+                            </button>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="alert alert-info alert-modern">
+                                <h6><i class="bi bi-info-circle"></i> Come ottenere l'URL:</h6>
+                                <small>
+                                    1. Accedi al portale UNITO<br>
+                                    2. Vai su "Orario Lezioni"<br>
+                                    3. Copia il link del calendario ICS
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Spinner -->
+                <div class="text-center loading-spinner" id="loading">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Caricamento...</span>
+                    </div>
+                    <p class="mt-3">Analizzando il calendario...</p>
+                </div>
+                
+                <!-- Courses Selection Section -->
+                <div class="courses-section" id="courses-section">
+                    <h3 class="mb-4"><i class="bi bi-check2-square"></i> Seleziona i Corsi</h3>
+                    
+                    <!-- Stats Row -->
+                    <div class="row mb-4" id="stats-row">
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h4 class="text-primary" id="total-courses">0</h4>
+                                <small class="text-muted">Corsi Totali</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h4 class="text-success" id="selected-courses">0</h4>
+                                <small class="text-muted">Corsi Selezionati</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h4 class="text-info" id="total-events">0</h4>
+                                <small class="text-muted">Eventi Totali</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Selection Buttons -->
+                    <div class="mb-4">
+                        <button type="button" class="btn btn-outline-success me-2" onclick="selectAllCourses()">
+                            <i class="bi bi-check-all"></i> Seleziona Tutti
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="deselectAllCourses()">
+                            <i class="bi bi-x-square"></i> Deseleziona Tutti
+                        </button>
+                        <button type="button" class="btn btn-success btn-custom" onclick="generateCalendar()" id="generate-btn" disabled>
+                            <i class="bi bi-calendar-check"></i> Genera Calendario
+                        </button>
+                    </div>
+                    
+                    <!-- Courses List -->
+                    <div id="courses-list" class="row">
+                        <!-- I corsi verranno inseriti qui dinamicamente -->
+                    </div>
+                </div>
+                
+                <!-- Download Section -->
+                <div class="download-section" id="download-section">
+                    <h3 class="mb-3"><i class="bi bi-download"></i> Calendario Pronto!</h3>
+                    <p class="lead">Il tuo calendario personalizzato è stato generato con successo.</p>
+                    
+                    <!-- Download Options -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-download h2 text-primary"></i>
+                                    <h5>Download File</h5>
+                                    <p class="small">Scarica il file .ics per importarlo manualmente</p>
+                                    <a href="#" class="btn btn-primary btn-custom" id="download-btn">
+                                        <i class="bi bi-download"></i> Scarica ICS
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-link-45deg h2 text-success"></i>
+                                    <h5>Link iCal</h5>
+                                    <p class="small">Sottoscrivi al calendario per aggiornamenti automatici</p>
+                                    <button type="button" class="btn btn-success btn-custom" onclick="createPermanentLink()">
+                                        <i class="bi bi-link"></i> Crea Link iCal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- iCal Link Display -->
+                    <div class="alert alert-success d-none" id="ical-info">
+                        <h6><i class="bi bi-check-circle"></i> Link iCal Creato!</h6>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Link iCal (HTTP):</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="ical-url" readonly>
+                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('ical-url')">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Link WebCal (per app calendario):</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="webcal-url" readonly>
+                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('webcal-url')">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>📱 Per dispositivi mobili:</h6>
+                                <small>
+                                    • Copia il link WebCal<br>
+                                    • Aprilo nel browser del telefono<br>
+                                    • Seleziona "Aggiungi al Calendario"
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>💻 Per computer:</h6>
+                                <small>
+                                    • Google Calendar: Impostazioni → Aggiungi calendario → Da URL<br>
+                                    • Apple Calendar: File → Nuova sottoscrizione calendario<br>
+                                    • Outlook: Aggiungi calendario → Da internet
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button type="button" class="btn btn-outline-light btn-lg btn-custom" onclick="resetForm()">
+                            <i class="bi bi-arrow-clockwise"></i> Nuovo Calendario
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <small>
+                            <i class="bi bi-info-circle"></i> 
+                            Il link iCal mantiene il calendario sempre aggiornato automaticamente.
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Error Alert -->
+                <div class="alert alert-danger alert-modern d-none" id="error-alert" role="alert">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Errore</h6>
+                    <span id="error-message"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        let coursesData = [];
+        let sessionId = null;
+        let calendarUrl = null;
+        
+        function showError(message) {
+            const errorAlert = document.getElementById('error-alert');
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('d-none');
+            setTimeout(() => {
+                errorAlert.classList.add('d-none');
+            }, 5000);
+        }
+        
+        function updateStepIndicator(activeStep) {
+            for (let i = 1; i <= 3; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.classList.remove('active', 'completed');
+                
+                if (i < activeStep) {
+                    step.classList.add('completed');
+                } else if (i === activeStep) {
+                    step.classList.add('active');
+                }
+            }
+        }
+        
+        async function analyzeCalendar() {
+            const urlInput = document.getElementById('calendar-url');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Inserisci l\'URL del calendario');
+                return;
+            }
+            
+            // Mostra loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('url-section').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/analyze_calendar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ calendar_url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    coursesData = data.courses;
+                    sessionId = data.session_id;
+                    calendarUrl = data.calendar_url;
+                    
+                    displayCourses(data.courses);
+                    updateStats();
+                    updateStepIndicator(2);
+                    
+                    // Nascondi loading e mostra corsi
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('courses-section').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Errore sconosciuto');
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('url-section').style.display = 'block';
+                showError('Errore durante l\'analisi del calendario: ' + error.message);
+            }
+        }
+        
+        function displayCourses(courses) {
+            const coursesList = document.getElementById('courses-list');
+            coursesList.innerHTML = '';
+            
+            courses.forEach((course, index) => {
+                const courseCard = document.createElement('div');
+                courseCard.className = 'col-lg-6 col-xl-4';
+                courseCard.innerHTML = `
+                    <div class="course-card" data-course="${course.name}" onclick="toggleCourse('${course.name}')">
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input course-checkbox me-3" 
+                                   id="course-${index}" onchange="toggleCourse('${course.name}')">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">${course.name}</h5>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-event"></i> ${course.events_count} eventi<br>
+                                    <i class="bi bi-geo-alt"></i> ${course.location}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                coursesList.appendChild(courseCard);
+            });
+        }
+        
+        function toggleCourse(courseName) {
+            const courseCard = document.querySelector(`[data-course="${courseName}"]`);
+            const checkbox = courseCard.querySelector('input[type="checkbox"]');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                courseCard.classList.add('selected');
+            } else {
+                courseCard.classList.remove('selected');
+            }
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
+        function selectAllCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            const courseCards = document.querySelectorAll('.course-card');
+            
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+            courseCards.forEach(card => card.classList.add('selected'));
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
+        function deselectAllCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            const courseCards = document.querySelectorAll('.course-card');
+            
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            courseCards.forEach(card => card.classList.remove('selected'));
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
+        function updateStats() {
+            const totalCourses = coursesData.length;
+            const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
+            const selectedCount = selectedCheckboxes.length;
+            
+            let totalEvents = 0;
+            selectedCheckboxes.forEach(checkbox => {
+                const courseName = checkbox.closest('[data-course]').getAttribute('data-course');
+                const course = coursesData.find(c => c.name === courseName);
+                if (course) {
+                    totalEvents += course.events_count;
+                }
+            });
+            
+            document.getElementById('total-courses').textContent = totalCourses;
+            document.getElementById('selected-courses').textContent = selectedCount;
+            document.getElementById('total-events').textContent = totalEvents;
+        }
+        
+        function updateGenerateButton() {
+            const selectedCount = document.querySelectorAll('.course-checkbox:checked').length;
+            const generateBtn = document.getElementById('generate-btn');
+            
+            generateBtn.disabled = selectedCount === 0;
+        }
+        
+        async function generateCalendar() {
+            const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
+            const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
+                return checkbox.closest('[data-course]').getAttribute('data-course');
+            });
+            
+            if (selectedCourses.length === 0) {
+                showError('Seleziona almeno un corso');
+                return;
+            }
+            
+            // Mostra loading
+            document.getElementById('courses-section').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/generate_calendar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        selected_courses: selectedCourses,
+                        calendar_url: calendarUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Aggiorna il link di download
+                    const downloadBtn = document.getElementById('download-btn');
+                    downloadBtn.href = data.download_url;
+                    
+                    updateStepIndicator(3);
+                    
+                    // Nascondi loading e mostra download
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('download-section').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Errore durante la generazione');
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('courses-section').style.display = 'block';
+                showError('Errore durante la generazione: ' + error.message);
+            }
+        }
+        
+        function resetForm() {
+            // Reset dell'interfaccia
+            document.getElementById('calendar-url').value = 'https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f';
+            document.getElementById('courses-section').style.display = 'none';
+            document.getElementById('download-section').style.display = 'none';
+            document.getElementById('url-section').style.display = 'block';
+            document.getElementById('ical-info').classList.add('d-none');
+            
+            // Reset delle variabili
+            coursesData = [];
+            sessionId = null;
+            calendarUrl = null;
+            
+            updateStepIndicator(1);
+        }
+        
+        async function createPermanentLink() {
+            try {
+                const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
+                const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
+                    return checkbox.closest('[data-course]').getAttribute('data-course');
+                });
+                
+                const response = await fetch('/api/create_permanent_link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        calendar_url: calendarUrl,
+                        selected_courses: selectedCourses
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Mostra le informazioni del link iCal
+                    document.getElementById('ical-url').value = data.ical_url;
+                    document.getElementById('webcal-url').value = data.webcal_url;
+                    document.getElementById('ical-info').classList.remove('d-none');
+                } else {
+                    throw new Error(data.error || 'Errore nella creazione del link');
+                }
+            } catch (error) {
+                showError('Errore nella creazione del link iCal: ' + error.message);
+            }
+        }
+        
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            element.setSelectionRange(0, 99999); // Per dispositivi mobili
+            
+            try {
+                document.execCommand('copy');
+                
+                // Feedback visivo
+                const button = event.target.closest('button');
+                const originalHtml = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-check"></i>';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-outline-secondary');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHtml;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+                
+            } catch (err) {
+                showError('Impossibile copiare il link. Selezionalo manualmente.');
+            }
+        }
+        
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepIndicator(1);
+        });
+    </script>
+</body>
+</html>
