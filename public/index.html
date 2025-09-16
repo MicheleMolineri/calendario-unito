@@ -207,7 +207,7 @@
                                        class="form-control form-control-lg" 
                                        id="calendar-url" 
                                        placeholder="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=..."
-                                       value="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f">
+                                       value="https://unito.prod.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f">
                             </div>
                             <button type="button" class="btn btn-primary btn-custom btn-lg" onclick="analyzeCalendar()">
                                 <i class="bi bi-search"></i> Analizza Calendario
@@ -450,7 +450,67 @@
         }
         
         function displayCourses(courses) {
-// ...existing code...
+            const coursesList = document.getElementById('courses-list');
+            coursesList.innerHTML = '';
+            
+            courses.forEach(course => {
+                const courseCard = document.createElement('div');
+                courseCard.className = 'col-md-4 mb-4';
+                courseCard.setAttribute('data-course', course.name);
+                courseCard.innerHTML = `
+                    <div class="course-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <input type="checkbox" class="form-check-input course-checkbox" id="course-${course.name}" onchange="toggleCourse('${course.name}')" />
+                            <label class="form-check-label ms-2" for="course-${course.name}">
+                                <h5 class="mb-0">${course.name}</h5>
+                            </label>
+                        </div>
+                        <p class="small text-muted">${course.events_count} eventi</p>
+                    </div>
+                `;
+                
+                coursesList.appendChild(courseCard);
+            });
+        }
+        
+        function toggleCourse(courseName) {
+            const courseCard = document.querySelector(`[data-course="${courseName}"]`);
+            const checkbox = courseCard.querySelector('input[type="checkbox"]');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                courseCard.classList.add('selected');
+            } else {
+                courseCard.classList.remove('selected');
+            }
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
+        function selectAllCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            const courseCards = document.querySelectorAll('.course-card');
+            
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+            courseCards.forEach(card => card.classList.add('selected'));
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
+        function deselectAllCourses() {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            const courseCards = document.querySelectorAll('.course-card');
+            
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            courseCards.forEach(card => card.classList.remove('selected'));
+            
+            updateStats();
+            updateGenerateButton();
+        }
+        
         function updateGenerateButton() {
             const selectedCount = document.querySelectorAll('.course-checkbox:checked').length;
             const generateBtn = document.getElementById('generate-btn');
@@ -505,7 +565,19 @@
         }
         
         function resetForm() {
-// ...existing code...
+            document.getElementById('calendar-url').value = '';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('url-section').style.display = 'block';
+            document.getElementById('courses-section').style.display = 'none';
+            document.getElementById('download-section').style.display = 'none';
+            document.getElementById('ical-info').classList.add('d-none');
+            document.getElementById('error-alert').classList.add('d-none');
+            
+            coursesData = [];
+            sessionId = null;
+            calendarUrl = null;
+        }
+        
         async function createPermanentLink() {
             try {
                 const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
@@ -525,198 +597,6 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    document.getElementById('ical-url').value = data.ical_url;
-                    document.getElementById('webcal-url').value = data.webcal_url;
-                    document.getElementById('ical-info').classList.remove('d-none');
-                } else {
-                    throw new Error(data.error || 'Errore nella creazione del link');
-                }
-            } catch (error) {
-                showError('Errore nella creazione del link iCal: ' + error.message);
-            }
-        }
-        
-        function copyToClipboard(elementId) {
-        
-        function displayCourses(courses) {
-            const coursesList = document.getElementById('courses-list');
-            coursesList.innerHTML = '';
-            
-            courses.forEach((course, index) => {
-                const courseCard = document.createElement('div');
-                courseCard.className = 'col-lg-6 col-xl-4';
-                courseCard.innerHTML = `
-                    <div class="course-card" data-course="${course.name}" onclick="toggleCourse('${course.name}')">
-                        <div class="d-flex align-items-center">
-                            <input type="checkbox" class="form-check-input course-checkbox me-3" 
-                                   id="course-${index}" onchange="toggleCourse('${course.name}')">
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1">${course.name}</h5>
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar-event"></i> ${course.events_count} eventi<br>
-                                    <i class="bi bi-geo-alt"></i> ${course.location}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                coursesList.appendChild(courseCard);
-            });
-        }
-        
-        function toggleCourse(courseName) {
-            const courseCard = document.querySelector(`[data-course="${courseName}"]`);
-            const checkbox = courseCard.querySelector('input[type="checkbox"]');
-            
-            checkbox.checked = !checkbox.checked;
-            
-            if (checkbox.checked) {
-                courseCard.classList.add('selected');
-            } else {
-                courseCard.classList.remove('selected');
-            }
-            
-            updateStats();
-            updateGenerateButton();
-        }
-        
-        function selectAllCourses() {
-            const checkboxes = document.querySelectorAll('.course-checkbox');
-            const courseCards = document.querySelectorAll('.course-card');
-            
-            checkboxes.forEach(checkbox => checkbox.checked = true);
-            courseCards.forEach(card => card.classList.add('selected'));
-            
-            updateStats();
-            updateGenerateButton();
-        }
-        
-        function deselectAllCourses() {
-            const checkboxes = document.querySelectorAll('.course-checkbox');
-            const courseCards = document.querySelectorAll('.course-card');
-            
-            checkboxes.forEach(checkbox => checkbox.checked = false);
-            courseCards.forEach(card => card.classList.remove('selected'));
-            
-            updateStats();
-            updateGenerateButton();
-        }
-        
-        function updateStats() {
-            const totalCourses = coursesData.length;
-            const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
-            const selectedCount = selectedCheckboxes.length;
-            
-            let totalEvents = 0;
-            selectedCheckboxes.forEach(checkbox => {
-                const courseName = checkbox.closest('[data-course]').getAttribute('data-course');
-                const course = coursesData.find(c => c.name === courseName);
-                if (course) {
-                    totalEvents += course.events_count;
-                }
-            });
-            
-            document.getElementById('total-courses').textContent = totalCourses;
-            document.getElementById('selected-courses').textContent = selectedCount;
-            document.getElementById('total-events').textContent = totalEvents;
-        }
-        
-        function updateGenerateButton() {
-            const selectedCount = document.querySelectorAll('.course-checkbox:checked').length;
-            const generateBtn = document.getElementById('generate-btn');
-            
-            generateBtn.disabled = selectedCount === 0;
-        }
-        
-        async function generateCalendar() {
-            const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
-            const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
-                return checkbox.closest('[data-course]').getAttribute('data-course');
-            });
-            
-            if (selectedCourses.length === 0) {
-                showError('Seleziona almeno un corso');
-                return;
-            }
-            
-            // Mostra loading
-            document.getElementById('courses-section').style.display = 'none';
-            document.getElementById('loading').style.display = 'block';
-            
-            try {
-                const response = await fetch('/api/generate_calendar', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        session_id: sessionId,
-                        selected_courses: selectedCourses,
-                        calendar_url: calendarUrl
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Aggiorna il link di download
-                    const downloadBtn = document.getElementById('download-btn');
-                    downloadBtn.href = data.download_url;
-                    
-                    updateStepIndicator(3);
-                    
-                    // Nascondi loading e mostra download
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('download-section').style.display = 'block';
-                } else {
-                    throw new Error(data.error || 'Errore durante la generazione');
-                }
-            } catch (error) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('courses-section').style.display = 'block';
-                showError('Errore durante la generazione: ' + error.message);
-            }
-        }
-        
-        function resetForm() {
-            // Reset dell'interfaccia
-            document.getElementById('calendar-url').value = 'https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f';
-            document.getElementById('courses-section').style.display = 'none';
-            document.getElementById('download-section').style.display = 'none';
-            document.getElementById('url-section').style.display = 'block';
-            document.getElementById('ical-info').classList.add('d-none');
-            
-            // Reset delle variabili
-            coursesData = [];
-            sessionId = null;
-            calendarUrl = null;
-            
-            updateStepIndicator(1);
-        }
-        
-        async function createPermanentLink() {
-            try {
-                const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
-                const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
-                    return checkbox.closest('[data-course]').getAttribute('data-course');
-                });
-                
-                const response = await fetch('/api/create_permanent_link', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        session_id: sessionId,
-                        calendar_url: calendarUrl,
-                        selected_courses: selectedCourses
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Mostra le informazioni del link iCal
                     document.getElementById('ical-url').value = data.ical_url;
                     document.getElementById('webcal-url').value = data.webcal_url;
                     document.getElementById('ical-info').classList.remove('d-none');
