@@ -8,6 +8,7 @@ Versione serverless dell'applicazione per filtrare il calendario universitario d
 - Account Vercel (gratuito su [vercel.com](https://vercel.com))
 - Vercel CLI (opzionale)
 
+
 ### Deploy Automatico via GitHub
 1. Fai push di questa cartella su un repository GitHub
 2. Connetti il repository a Vercel
