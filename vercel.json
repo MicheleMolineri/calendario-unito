@@ -30,11 +30,6 @@
       "dest": "/public/index.html"
     }
   ],
-  "functions": {
-    "api/*.py": {
-      "runtime": "python3.9"
-    }
-  },
   "env": {
     "PYTHONPATH": "/var/task"
   }
