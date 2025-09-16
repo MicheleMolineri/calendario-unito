@@ -35,7 +35,12 @@ class UniversityCalendarManager:
             Contenuto del calendario come stringa
         """
         try:
-            response = requests.get(self.calendar_url, timeout=30)
+            headers = {
+                'User-Agent': 'calendario-unito/1.0 (+https://vercel.app) Python-requests',
+                'Accept': 'text/calendar, text/plain, */*'
+            }
+            # Timeout: (connect, read) kept under Vercel Hobby 10s limit
+            response = requests.get(self.calendar_url, headers=headers, timeout=(5, 5))
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
