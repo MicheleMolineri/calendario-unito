@@ -10,4 +10,3 @@ Questo script Python ti permette di scaricare, filtrare e mantenere aggiornato i
 - ✅ **Filtraggio** del calendario per includere solo le materie scelte
 - ✅ **Rilevamento automatico** degli aggiornamenti
 - ✅ **Esportazione** in formato ICS compatibile con tutti i calendar app
-- ✅ **Aggiornamento automatico** programmabile
