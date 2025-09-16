@@ -9,6 +9,7 @@ import requests
 import json
 import os
 import hashlib
+import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Set
 from icalendar import Calendar, Event
@@ -35,15 +36,25 @@ class UniversityCalendarManager:
             Contenuto del calendario come stringa
         """
         try:
+            start = time.time()
             headers = {
                 'User-Agent': 'calendario-unito/1.0 (+https://vercel.app) Python-requests',
                 'Accept': 'text/calendar, text/plain, */*'
             }
-            # Timeout: (connect, read) kept under Vercel Hobby 10s limit
-            response = requests.get(self.calendar_url, headers=headers, timeout=(5, 5))
+            # Timeout: (connect, read) kept within ~10s limit
+            response = requests.get(
+                self.calendar_url,
+                headers=headers,
+                timeout=(3, 7),
+                allow_redirects=True
+            )
             response.raise_for_status()
+            elapsed = time.time() - start
+            content_len = response.headers.get('Content-Length')
+            print(f"[download_calendar] status={response.status_code} len={content_len} elapsed={elapsed:.2f}s url={self.calendar_url[:120]}")
             return response.text
         except requests.RequestException as e:
+            print(f"[download_calendar][error] {e}")
             raise Exception(f"Errore durante il download del calendario: {e}")
     
     def parse_calendar(self, calendar_data: str) -> Calendar:
@@ -57,7 +68,10 @@ class UniversityCalendarManager:
             Oggetto Calendar parsificato
         """
         try:
-            return Calendar.from_ical(calendar_data)
+            t0 = time.time()
+            cal = Calendar.from_ical(calendar_data)
+            print(f"[parse_calendar] parsed in {time.time()-t0:.2f}s")
+            return cal
         except Exception as e:
             raise Exception(f"Errore durante il parsing del calendario: {e}")
     
@@ -93,8 +107,7 @@ class UniversityCalendarManager:
                     'description': description,
                     'location': location,
                     'start': start_time,
-                    'end': end_time,
-                    'component': component
+                    'end': end_time
                 }
                 
                 courses[course_name].append(event_info)
