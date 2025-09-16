@@ -1,19 +1,19 @@
 {
   "functions": {
     "api/analyze_calendar.py": {
-      "runtime": "@vercel/python"
+      "runtime": "vercel-python@0.1.0"
     },
     "api/create_permanent_link.py": {
-      "runtime": "@vercel/python"
+      "runtime": "vercel-python@0.1.0"
     },
     "api/download.py": {
-      "runtime": "@vercel/python"
+      "runtime": "vercel-python@0.1.0"
     },
     "api/generate_calendar.py": {
-      "runtime": "@vercel/python"
+      "runtime": "vercel-python@0.1.0"
     },
     "api/ical.py": {
-      "runtime": "@vercel/python"
+      "runtime": "vercel-python@0.1.0"
     }
   },
   "rewrites": [
