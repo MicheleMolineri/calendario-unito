@@ -4,11 +4,13 @@ import hashlib
 import tempfile
 import os
 from calendar_manager import UniversityCalendarManager
+import time
 
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
+            t0 = time.time()
             # Leggi il body della richiesta
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
@@ -35,24 +37,11 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error_response({'error': 'Formato calendario non valido'}, 400)
                 return
             
-            # Estrai i corsi
-            courses = manager.extract_courses(calendar)
-            if not courses:
+            # Estrai corsi (versione leggera e veloce)
+            courses_list = manager.summarize_courses(calendar)
+            if not courses_list:
                 self.send_error_response({'error': 'Nessun corso trovato nel calendario'}, 400)
                 return
-            
-            # Prepara i dati per la risposta
-            courses_list = []
-            for course_name, events in courses.items():
-                courses_list.append({
-                    'name': course_name,
-                    'events_count': len(events),
-                    'first_event': str(events[0]['start']) if events else 'N/A',
-                    'location': events[0]['location'] if events and events[0]['location'] else 'N/A'
-                })
-            
-            # Ordina per nome
-            courses_list.sort(key=lambda x: x['name'])
             
             # Genera session ID
             session_id = hashlib.md5(calendar_url.encode()).hexdigest()
@@ -67,7 +56,8 @@ class handler(BaseHTTPRequestHandler):
                 'courses': courses_list,
                 'total_courses': len(courses_list),
                 'session_id': session_id,
-                'calendar_url': calendar_url
+                'calendar_url': calendar_url,
+                'elapsed': round(time.time() - t0, 2)
             }
             
             self.send_success_response(response_data)

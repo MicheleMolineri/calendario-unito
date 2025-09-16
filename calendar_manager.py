@@ -113,6 +113,33 @@ class UniversityCalendarManager:
                 courses[course_name].append(event_info)
         
         return courses
+
+    def summarize_courses(self, calendar: Calendar):
+        """
+        Restituisce un elenco compatto di corsi con conteggio eventi, primo evento e location.
+        Più leggero di extract_courses (non conserva i componenti completi).
+        """
+        summary = {}
+        for component in calendar.walk():
+            if component.name == "VEVENT":
+                summary_str = str(component.get('summary', ''))
+                location = str(component.get('location', ''))
+                start_time = component.get('dtstart').dt
+                course_name = self.extract_course_name(summary_str, '')
+
+                s = summary.get(course_name)
+                if not s:
+                    summary[course_name] = {
+                        'name': course_name,
+                        'events_count': 1,
+                        'first_event': str(start_time),
+                        'location': location or 'N/A'
+                    }
+                else:
+                    s['events_count'] += 1
+                    # Mantieni il primo evento visto
+        # Ordina alfabeticamente
+        return sorted(summary.values(), key=lambda x: x['name'])
     
     def extract_course_name(self, summary: str, description: str) -> str:
         """
