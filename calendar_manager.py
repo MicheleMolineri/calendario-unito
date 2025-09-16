@@ -45,7 +45,7 @@ class UniversityCalendarManager:
             response = requests.get(
                 self.calendar_url,
                 headers=headers,
-                timeout=(3, 7),
+                timeout=(5, 5),
                 allow_redirects=True
             )
             response.raise_for_status()
