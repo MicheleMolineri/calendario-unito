@@ -30,7 +30,7 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            margin: 2rem auto;
+            margin: 1rem auto;
             max-width: 1200px;
         }
         
@@ -38,7 +38,7 @@
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             border-radius: 20px 20px 0 0;
-            padding: 2rem;
+            padding: 1.5rem;
             text-align: center;
         }
         
@@ -46,19 +46,23 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 2rem 0;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         
         .step {
             display: flex;
             align-items: center;
-            margin: 0 1rem;
+            margin: 0.25rem 0.5rem;
             font-weight: 500;
+            flex: 1;
+            min-width: fit-content;
         }
         
         .step-number {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: #e9ecef;
             color: #6c757d;
@@ -67,6 +71,7 @@
             justify-content: center;
             margin-right: 0.5rem;
             font-weight: bold;
+            font-size: 0.9rem;
         }
         
         .step.active .step-number {
@@ -82,8 +87,8 @@
         .url-input-section {
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .courses-section {
@@ -167,6 +172,158 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            .main-container {
+                margin: 0.5rem auto;
+                border-radius: 15px;
+            }
+            
+            .header-section {
+                padding: 1rem;
+                border-radius: 15px 15px 0 0;
+            }
+            
+            .header-section h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .header-section .lead {
+                font-size: 1rem;
+            }
+            
+            .step-indicator {
+                margin: 1rem 0;
+                justify-content: space-around;
+            }
+            
+            .step {
+                flex-direction: column;
+                text-align: center;
+                margin: 0 0.25rem;
+                font-size: 0.85rem;
+            }
+            
+            .step-number {
+                margin-right: 0;
+                margin-bottom: 0.25rem;
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+            
+            .url-input-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .btn-custom {
+                width: 100%;
+                margin-bottom: 0.5rem;
+                min-height: 48px; /* Touch-friendly size */
+            }
+            
+            .form-control-lg {
+                min-height: 48px; /* Touch-friendly size */
+                font-size: 1rem;
+            }
+            
+            .d-grid .btn {
+                min-height: 44px; /* Touch-friendly size */
+            }
+            
+            .stats-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .course-card {
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .course-checkbox {
+                transform: scale(1.5);
+                margin-top: 0.25rem !important;
+            }
+            
+            .download-section {
+                padding: 1.5rem;
+            }
+            
+            .alert-modern {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-section h1 {
+                font-size: 1.25rem;
+            }
+            
+            .step {
+                font-size: 0.75rem;
+            }
+            
+            .step-number {
+                width: 25px;
+                height: 25px;
+                font-size: 0.7rem;
+            }
+            
+            .btn-custom {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .course-card h5 {
+                font-size: 1rem;
+            }
+            
+            .stats-card h4 {
+                font-size: 1.5rem;
+            }
+            
+            .input-group {
+                flex-wrap: nowrap;
+            }
+            
+            .input-group .form-control {
+                min-width: 0;
+                font-size: 0.8rem;
+            }
+            
+            .input-group .btn {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+        }
+        
+        /* Extra small devices (phones in portrait) */
+        @media (max-width: 320px) {
+            .header-section {
+                padding: 0.75rem;
+            }
+            
+            .main-container {
+                margin: 0.25rem auto;
+            }
+            
+            .btn-custom {
+                font-size: 0.8rem;
+                padding: 0.5rem;
+            }
+            
+            .input-group .form-control {
+                font-size: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -194,13 +351,13 @@
                 </div>
             </div>
             
-            <div class="container p-4">
+            <div class="container-fluid px-2 px-md-4 py-2 py-md-4">
                 <!-- URL Input Section -->
                 <div class="url-input-section" id="url-section">
                     <h3 class="mb-4"><i class="bi bi-link-45deg"></i> Inserisci URL del Calendario</h3>
                     
                     <div class="row">
-                        <div class="col-lg-8">
+                        <div class="col-12 col-lg-8">
                             <div class="mb-3">
                                 <label for="calendar-url" class="form-label">URL del calendario universitario:</label>
                                 <input type="url" 
@@ -209,11 +366,11 @@
                                        placeholder="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=..."
                                        value="https://unito.prod.up.cineca.it/api/FiltriICal/impegniICal?id=68a470316e83cc00195a4a8f">
                             </div>
-                            <button type="button" class="btn btn-primary btn-custom btn-lg" onclick="analyzeCalendar()">
+                            <button type="button" class="btn btn-primary btn-custom btn-lg w-100 w-lg-auto" onclick="analyzeCalendar()">
                                 <i class="bi bi-search"></i> Analizza Calendario
                             </button>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-12 col-lg-4 mt-3 mt-lg-0">
                             <div class="alert alert-info alert-modern">
                                 <h6><i class="bi bi-info-circle"></i> Come ottenere l'URL:</h6>
                                 <small>
@@ -262,15 +419,17 @@
                     
                     <!-- Selection Buttons -->
                     <div class="mb-4">
-                        <button type="button" class="btn btn-outline-success me-2" onclick="selectAllCourses()">
-                            <i class="bi bi-check-all"></i> Seleziona Tutti
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary me-2" onclick="deselectAllCourses()">
-                            <i class="bi bi-x-square"></i> Deseleziona Tutti
-                        </button>
-                        <button type="button" class="btn btn-success btn-custom" onclick="generateCalendar()" id="generate-btn" disabled>
-                            <i class="bi bi-calendar-check"></i> Genera Calendario
-                        </button>
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button type="button" class="btn btn-outline-success" onclick="selectAllCourses()">
+                                <i class="bi bi-check-all"></i> Seleziona Tutti
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="deselectAllCourses()">
+                                <i class="bi bi-x-square"></i> Deseleziona Tutti
+                            </button>
+                            <button type="button" class="btn btn-success btn-custom" onclick="generateCalendar()" id="generate-btn" disabled>
+                                <i class="bi bi-calendar-check"></i> Genera Calendario
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Courses List -->
@@ -286,7 +445,7 @@
                     
                     <!-- Download Options -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6 mb-3 mb-md-0">
                             <div class="card bg-light border-0">
                                 <div class="card-body text-center">
                                     <i class="bi bi-download h2 text-primary"></i>
@@ -298,7 +457,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="card bg-light border-0">
                                 <div class="card-body text-center">
                                     <i class="bi bi-link-45deg h2 text-success"></i>
@@ -318,8 +477,8 @@
                         <div class="mb-3">
                             <label class="form-label"><strong>Link iCal (HTTP):</strong></label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="ical-url" readonly>
-                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('ical-url')">
+                                <input type="text" class="form-control" id="ical-url" readonly style="font-size: 0.9rem;">
+                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('ical-url')" title="Copia link">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
@@ -327,14 +486,14 @@
                         <div class="mb-3">
                             <label class="form-label"><strong>Link WebCal (per app calendario):</strong></label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="webcal-url" readonly>
-                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('webcal-url')">
+                                <input type="text" class="form-control" id="webcal-url" readonly style="font-size: 0.9rem;">
+                                <button class="btn btn-outline-secondary" onclick="copyToClipboard('webcal-url')" title="Copia link">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6 mb-3">
                                 <h6>📱 Per dispositivi mobili:</h6>
                                 <small>
                                     • Copia il link WebCal<br>
@@ -342,7 +501,7 @@
                                     • Seleziona "Aggiungi al Calendario"
                                 </small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <h6>💻 Per computer:</h6>
                                 <small>
                                     • Google Calendar: Impostazioni → Aggiungi calendario → Da URL<br>
@@ -459,18 +618,22 @@
             
             courses.forEach((course, index) => {
                 const courseCard = document.createElement('div');
-                courseCard.className = 'col-lg-6 col-xl-4';
+                courseCard.className = 'col-12 col-md-6 col-lg-4';
                 courseCard.innerHTML = `
                     <div class="course-card" data-course="${course.name}" onclick="toggleCourse('${course.name}')">
-                        <div class="d-flex align-items-center">
-                            <input type="checkbox" class="form-check-input course-checkbox me-3" 
+                        <div class="d-flex align-items-start">
+                            <input type="checkbox" class="form-check-input course-checkbox me-3 mt-1" 
                                    id="course-${index}" onchange="toggleCourse('${course.name}')">
                             <div class="flex-grow-1">
-                                <h5 class="mb-1">${course.name}</h5>
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar-event"></i> ${course.events_count} eventi<br>
-                                    <i class="bi bi-geo-alt"></i> ${course.location}
-                                </small>
+                                <h5 class="mb-2">${course.name}</h5>
+                                <div class="small text-muted">
+                                    <div class="mb-1">
+                                        <i class="bi bi-calendar-event"></i> ${course.events_count} eventi
+                                    </div>
+                                    <div>
+                                        <i class="bi bi-geo-alt"></i> ${course.location}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
