@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import os
 import json
 from datetime import datetime
@@ -9,14 +9,19 @@ from calendar_manager import UniversityCalendarManager
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
-            # Estrai session_id dal path: /api/ical/[session_id]
-            path_parts = self.path.split('/')
-            if len(path_parts) < 4:
-                self.send_error_response('Session ID richiesto', 400)
-                return
-            
-            session_id = path_parts[3].split('?')[0]  # Rimuove eventuali query params
-            
+            # Estrai session_id dal path (/api/ical/<session_id>) oppure dalla query (?session_id=...)
+            session_id = None
+            parsed = urlparse(self.path)
+            # Prova a leggere da path segment
+            parts = parsed.path.strip('/').split('/')  # es: ['api','ical','<session_id>']
+            if len(parts) >= 3 and parts[0] == 'api' and parts[1] == 'ical':
+                candidate = parts[2]
+                if candidate:
+                    session_id = candidate
+            # Fallback: query string
+            if not session_id:
+                qs = parse_qs(parsed.query)
+                session_id = (qs.get('session_id') or [None])[0]
             if not session_id:
                 self.send_error_response('Session ID richiesto', 400)
                 return

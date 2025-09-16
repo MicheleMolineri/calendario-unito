@@ -1,13 +1,15 @@
 {
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.12",
+      "memory": 512,
+      "maxDuration": 10
     }
-  
+  },
+  "rewrites": [
+    { "source": "/api/ical/:session_id", "destination": "/api/ical.py" },
+    { "source": "/api/:match*", "destination": "/api/:match*" },
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/:path*", "destination": "/public/:path*" }
   ]
 }

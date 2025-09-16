@@ -58,8 +58,8 @@ vercel-app/
 ## 🔧 Configurazione
 
 Il file `vercel.json` configura:
-- Routing delle API
-- Runtime Python 3.9
+- Routing delle API e rewrites
+- Runtime Python 3.12 (aggiornabile alle versioni supportate da Vercel)
 - Gestione file statici
 - CORS automatico
 
