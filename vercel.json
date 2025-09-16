@@ -1,4 +1,31 @@
 {
+  "functions": {
+    "api/analyze_calendar.py": {
+      "runtime": "@vercel/python"
+    },
+    "api/create_permanent_link.py": {
+      "runtime": "@vercel/python"
+    },
+    "api/download.py": {
+      "runtime": "@vercel/python"
+    },
+    "api/generate_calendar.py": {
+      "runtime": "@vercel/python"
+    },
+    "api/ical.py": {
+      "runtime": "@vercel/python"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
+  ],
   "env": {
     "PYTHONPATH": "/var/task"
   }
