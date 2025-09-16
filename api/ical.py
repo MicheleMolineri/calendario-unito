@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+import base64
 import os
 import json
 from datetime import datetime
@@ -30,8 +31,37 @@ class handler(BaseHTTPRequestHandler):
             file_path = f'/tmp/{session_id}_filtered.ics'
             config_file = f'/tmp/{session_id}_config.json'
             
-            # Se non esiste il calendario o la configurazione, prova ad aggiornarlo
+            # Se non esiste il calendario o la configurazione, prova modalità stateless
             if not os.path.exists(file_path) or not os.path.exists(config_file):
+                # Tenta di leggere la config dalla query string (cfg base64 url-safe)
+                qs = parse_qs(parsed.query)
+                cfg_param = (qs.get('cfg') or [None])[0]
+                if cfg_param:
+                    try:
+                        cfg_json = base64.urlsafe_b64decode(cfg_param + '===').decode('utf-8')
+                        cfg = json.loads(cfg_json)
+                        calendar_url = cfg.get('calendar_url')
+                        selected_courses = cfg.get('selected_courses', [])
+                        if calendar_url and selected_courses:
+                            manager = UniversityCalendarManager(calendar_url)
+                            calendar_data = manager.download_calendar()
+                            if calendar_data:
+                                calendar = manager.parse_calendar(calendar_data)
+                                if calendar:
+                                    filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
+                                    # Non possiamo garantire persistenza, serviamo direttamente
+                                    data = filtered_calendar.to_ical()
+                                    self.send_response(200)
+                                    self.send_header('Content-Type', 'text/calendar; charset=utf-8')
+                                    self.send_header('Cache-Control', 'no-cache, must-revalidate')
+                                    self.send_header('Access-Control-Allow-Origin', '*')
+                                    self.send_header('Content-Length', str(len(data)))
+                                    self.end_headers()
+                                    self.wfile.write(data)
+                                    return
+                    except Exception:
+                        pass
+                # Se ancora non disponibile, errore
                 self.send_error_response('Calendario non trovato. Rigenera il calendario.', 404)
                 return
             

@@ -21,17 +21,25 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error_response({'error': 'Dati mancanti per la generazione'}, 400)
                 return
             
-            # Recupera i dati del calendario salvati in /tmp
+            # Recupera i dati del calendario salvati in /tmp; fallback: scarica di nuovo dall'URL
             temp_file = f'/tmp/{session_id}_calendar.txt'
-            if not os.path.exists(temp_file):
-                self.send_error_response({'error': 'Sessione scaduta. Ricarica il calendario.'}, 400)
-                return
-            
-            with open(temp_file, 'r', encoding='utf-8') as f:
-                calendar_data = f.read()
+            calendar_data = None
+            if os.path.exists(temp_file):
+                with open(temp_file, 'r', encoding='utf-8') as f:
+                    calendar_data = f.read()
             
             # Crea manager e processa
             manager = UniversityCalendarManager(calendar_url)
+            # Se manca il file temporaneo, prova a scaricare nuovamente usando l'URL
+            if not calendar_data and calendar_url:
+                try:
+                    calendar_data = manager.download_calendar()
+                except Exception as _:
+                    pass
+            if not calendar_data:
+                self.send_error_response({'error': 'Impossibile ottenere il calendario. Riprova.'}, 400)
+                return
+
             calendar = manager.parse_calendar(calendar_data)
             
             # Crea calendario filtrato

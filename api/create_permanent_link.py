@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 from datetime import datetime
+import base64
 
 
 class handler(BaseHTTPRequestHandler):
@@ -37,7 +38,17 @@ class handler(BaseHTTPRequestHandler):
             protocol = 'https' if 'vercel' in host else 'http'
             
             base_url = f"{protocol}://{host}"
-            ical_url = f"{base_url}/api/ical/{session_id}"
+
+            # Encoda la configurazione come fallback stateless nel link (base64 url-safe)
+            cfg_payload = {
+                'calendar_url': calendar_url,
+                'selected_courses': selected_courses
+            }
+            cfg_str = json.dumps(cfg_payload, separators=(',', ':'))
+            cfg_enc = base64.urlsafe_b64encode(cfg_str.encode('utf-8')).decode('ascii')
+
+            # Link iCal con session_id e fallback cfg
+            ical_url = f"{base_url}/api/ical/{session_id}?cfg={cfg_enc}"
             
             response_data = {
                 'success': True,
