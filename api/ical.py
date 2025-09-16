@@ -1,121 +1,62 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import base64
-import os
 import json
-from datetime import datetime
 from calendar_manager import UniversityCalendarManager
-
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
-            # Estrai session_id dal path (/api/ical/<session_id>) oppure dalla query (?session_id=...)
-            session_id = None
             parsed = urlparse(self.path)
-            # Prova a leggere da path segment
-            parts = parsed.path.strip('/').split('/')  # es: ['api','ical','<session_id>']
-            if len(parts) >= 3 and parts[0] == 'api' and parts[1] == 'ical':
-                candidate = parts[2]
-                if candidate:
-                    session_id = candidate
-            # Fallback: query string
-            if not session_id:
-                qs = parse_qs(parsed.query)
-                session_id = (qs.get('session_id') or [None])[0]
-            if not session_id:
-                self.send_error_response('Session ID richiesto', 400)
+            qs = parse_qs(parsed.query)
+            cfg_param = qs.get('cfg', [None])[0]
+
+            if not cfg_param:
+                self.send_error_response('Configurazione mancante', 400)
                 return
-            
-            # Prima controlla se esiste già un calendario filtrato
-            file_path = f'/tmp/{session_id}_filtered.ics'
-            config_file = f'/tmp/{session_id}_config.json'
-            
-            # Se non esiste il calendario o la configurazione, prova modalità stateless
-            if not os.path.exists(file_path) or not os.path.exists(config_file):
-                # Tenta di leggere la config dalla query string (cfg base64 url-safe)
-                qs = parse_qs(parsed.query)
-                cfg_param = (qs.get('cfg') or [None])[0]
-                if cfg_param:
-                    try:
-                        cfg_json = base64.urlsafe_b64decode(cfg_param + '===').decode('utf-8')
-                        cfg = json.loads(cfg_json)
-                        calendar_url = cfg.get('calendar_url')
-                        selected_courses = cfg.get('selected_courses', [])
-                        if calendar_url and selected_courses:
-                            manager = UniversityCalendarManager(calendar_url)
-                            calendar_data = manager.download_calendar()
-                            if calendar_data:
-                                calendar = manager.parse_calendar(calendar_data)
-                                if calendar:
-                                    filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
-                                    # Non possiamo garantire persistenza, serviamo direttamente
-                                    data = filtered_calendar.to_ical()
-                                    self.send_response(200)
-                                    self.send_header('Content-Type', 'text/calendar; charset=utf-8')
-                                    self.send_header('Cache-Control', 'no-cache, must-revalidate')
-                                    self.send_header('Access-Control-Allow-Origin', '*')
-                                    self.send_header('Content-Length', str(len(data)))
-                                    self.end_headers()
-                                    self.wfile.write(data)
-                                    return
-                    except Exception:
-                        pass
-                # Se ancora non disponibile, errore
-                self.send_error_response('Calendario non trovato. Rigenera il calendario.', 404)
-                return
-            
-            # Carica la configurazione per aggiornamenti automatici
+
+            # Decodifica la configurazione da base64
             try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                
-                calendar_url = config.get('calendar_url')
-                selected_courses = config.get('selected_courses', [])
-                
-                if calendar_url and selected_courses:
-                    # Aggiorna il calendario se necessario (ogni volta per ora)
-                    manager = UniversityCalendarManager(calendar_url)
-                    calendar_data = manager.download_calendar()
-                    
-                    if calendar_data:
-                        calendar = manager.parse_calendar(calendar_data)
-                        if calendar:
-                            # Crea calendario filtrato aggiornato
-                            filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
-                            
-                            # Salva il calendario aggiornato
-                            with open(file_path, 'wb') as f:
-                                f.write(filtered_calendar.to_ical())
-                            
-                            # Aggiorna il timestamp
-                            config['last_update'] = datetime.now().isoformat()
-                            with open(config_file, 'w', encoding='utf-8') as f:
-                                json.dump(config, f, indent=2, ensure_ascii=False)
-            except:
-                # Se fallisce l'aggiornamento, usa il file esistente
-                pass
+                # Aggiungi padding se necessario
+                cfg_json = base64.urlsafe_b64decode(cfg_param + '===').decode('utf-8')
+                cfg = json.loads(cfg_json)
+                calendar_url = cfg.get('url')
+                selected_courses = cfg.get('corsi', [])
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                self.send_error_response(f'Configurazione non valida: {e}', 400)
+                return
+
+            if not calendar_url or not selected_courses:
+                self.send_error_response('URL calendario o corsi mancanti nella configurazione', 400)
+                return
+
+            # Processa il calendario
+            manager = UniversityCalendarManager(calendar_url)
+            calendar_data = manager.download_calendar()
+            if not calendar_data:
+                self.send_error_response('Impossibile scaricare il calendario originale', 502)
+                return
             
-            # Leggi e servi il file calendario
-            with open(file_path, 'rb') as f:
-                calendar_data = f.read()
+            calendar = manager.parse_calendar(calendar_data)
+            filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
             
-            # Servi il file ICS per la sottoscrizione
+            # Servi il calendario filtrato
+            data = filtered_calendar.to_ical()
             self.send_response(200)
             self.send_header('Content-Type', 'text/calendar; charset=utf-8')
-            self.send_header('Cache-Control', 'no-cache, must-revalidate')
+            # Cache per 1 ora per non sovraccaricare il server di origine
+            self.send_header('Cache-Control', 'public, max-age=3600, s-maxage=3600')
             self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-Length', str(len(calendar_data)))
+            self.send_header('Content-Length', str(len(data)))
             self.end_headers()
-            self.wfile.write(calendar_data)
-            
+            self.wfile.write(data)
+
         except Exception as e:
             self.send_error_response(f'Errore nel servire il calendario: {str(e)}', 500)
-    
+
     def send_error_response(self, message, status_code):
-        """Invia una risposta di errore"""
         self.send_response(status_code)
-        self.send_header('Content-type', 'text/plain')
+        self.send_header('Content-type', 'text/plain; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(message.encode('utf-8'))

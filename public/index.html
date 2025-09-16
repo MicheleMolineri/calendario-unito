@@ -409,24 +409,22 @@
         
         async function analyzeCalendar() {
             const urlInput = document.getElementById('calendar-url');
-            const url = urlInput.value.trim();
+            const calendarUrl = urlInput.value.trim();
             
-            if (!url) {
+            if (!calendarUrl) {
                 showError('Inserisci l\'URL del calendario');
                 return;
             }
             
-            // Mostra loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('url-section').style.display = 'none';
             
             try {
-                const response = await fetch('/api/analyze_calendar', {
+                // Chiamiamo la nuova API unificata senza selected_courses per la fase di analisi
+                const response = await fetch('/api/generate_calendar', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ calendar_url: url })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ calendar_url: calendarUrl })
                 });
                 
                 const data = await response.json();
@@ -434,13 +432,11 @@
                 if (data.success) {
                     coursesData = data.courses;
                     sessionId = data.session_id;
-                    calendarUrl = data.calendar_url;
                     
                     displayCourses(data.courses);
                     updateStats();
                     updateStepIndicator(2);
                     
-                    // Nascondi loading e mostra corsi
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('courses-section').style.display = 'block';
                 } else {
@@ -449,9 +445,98 @@
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('url-section').style.display = 'block';
-                showError('Errore durante l\'analisi del calendario: ' + error.message);
+                showError('Errore durante l\'analisi: ' + error.message);
             }
         }
+        
+        function displayCourses(courses) {
+// ...existing code...
+        function updateGenerateButton() {
+            const selectedCount = document.querySelectorAll('.course-checkbox:checked').length;
+            const generateBtn = document.getElementById('generate-btn');
+            
+            generateBtn.disabled = selectedCount === 0;
+        }
+        
+        async function generateCalendar() {
+            const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
+            const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
+                return checkbox.closest('[data-course]').getAttribute('data-course');
+            });
+            
+            if (selectedCourses.length === 0) {
+                showError('Seleziona almeno un corso');
+                return;
+            }
+            
+            document.getElementById('courses-section').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                // Chiamiamo la stessa API, ma questa volta con i corsi selezionati
+                const response = await fetch('/api/generate_calendar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        selected_courses: selectedCourses,
+                        calendar_url: calendarUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadBtn = document.getElementById('download-btn');
+                    downloadBtn.href = data.download_url;
+                    
+                    updateStepIndicator(3);
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('download-section').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Errore durante la generazione');
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('courses-section').style.display = 'block';
+                showError('Errore durante la generazione: ' + error.message);
+            }
+        }
+        
+        function resetForm() {
+// ...existing code...
+        async function createPermanentLink() {
+            try {
+                const selectedCheckboxes = document.querySelectorAll('.course-checkbox:checked');
+                const selectedCourses = Array.from(selectedCheckboxes).map(checkbox => {
+                    return checkbox.closest('[data-course]').getAttribute('data-course');
+                });
+                
+                const response = await fetch('/api/create_permanent_link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        calendar_url: calendarUrl,
+                        selected_courses: selectedCourses
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('ical-url').value = data.ical_url;
+                    document.getElementById('webcal-url').value = data.webcal_url;
+                    document.getElementById('ical-info').classList.remove('d-none');
+                } else {
+                    throw new Error(data.error || 'Errore nella creazione del link');
+                }
+            } catch (error) {
+                showError('Errore nella creazione del link iCal: ' + error.message);
+            }
+        }
+        
+        function copyToClipboard(elementId) {
         
         function displayCourses(courses) {
             const coursesList = document.getElementById('courses-list');
