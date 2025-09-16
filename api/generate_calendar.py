@@ -13,6 +13,7 @@ class handler(BaseHTTPRequestHandler):
             data = json.loads(post_data.decode('utf-8'))
             
             calendar_url = data.get('calendar_url', '').strip()
+            
             selected_courses = data.get('selected_courses') # Può essere None se si analizza solo
 
             if not calendar_url:
