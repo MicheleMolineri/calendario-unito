@@ -8,13 +8,21 @@ print("Flask app created")
 
 @app.route('/')
 def index():
+    print("Request received on /")
     return "<h1>Hello from Railway!</h1><p>Minimal app is working!</p>"
 
 @app.route('/ping')
 def ping():
+    print("Request received on /ping")
     return 'pong', 200
+
+@app.route('/health')
+def health():
+    print("Request received on /health")
+    return {'status': 'ok'}, 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     print(f"Starting server on port {port}")
-    app.run(host='0.0.0.0', port=port)
+    print(f"PORT env var: {os.environ.get('PORT')}")
+    app.run(host='0.0.0.0', port=port, debug=True)
