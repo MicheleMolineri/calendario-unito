@@ -1,0 +1,14 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "gunicorn --bind 0.0.0.0:$PORT main:app"
+  },
+  "volumes": [
+    {
+      "name": "calendar-data",
+      "mountPath": "/app/temp_calendars"
+    }
+  ]
+}

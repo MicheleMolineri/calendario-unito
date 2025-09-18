@@ -139,7 +139,7 @@ filtered_calendar.ics
 # Railway handles most deployment aspects automatically
 # These are additional files that might be created during deployment
 .railway/
-railway.json
+# railway.json  # <-- Removed to allow Railway deployment configuration
 
 # IDE
 .vscode/
