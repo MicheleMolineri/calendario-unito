@@ -1,5 +1,19 @@
-#!/usr/bin/env python3
-"""
+#!/usr/bin/env app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISS!MI!ZZIMà@')
+CORS(app)
+
+# Configurazione per Railway e altri ambienti
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'temp_calendars')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Crea cartella se non esiste
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Configurazione server
+PORT = int(os.environ.get('PORT', 5001))
+HOST = os.environ.get('HOST', '0.0.0.0')
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 Applicazione Flask per la gestione del calendario universitario
 Interfaccia web moderna per selezionare e filtrare i corsi
 """
@@ -21,21 +35,16 @@ except ImportError:
     pass  # python-dotenv non installato, usa solo variabili d'ambiente di sistema
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISS!MI!ZZIMà@')
+app.secret_key = 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISSIMISS!MI!ZZIMà@' 
 CORS(app)
 
-# Configurazione per Railway e altri ambienti
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'temp_calendars')
+# Configurazione
+UPLOAD_FOLDER = 'temp_calendars'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Crea cartella se non esiste
+# Crea cartella temporanea se non existe
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-
-# Configurazione server
-PORT = int(os.environ.get('PORT', 5001))
-HOST = os.environ.get('HOST', '0.0.0.0')
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 
 @app.route('/')
