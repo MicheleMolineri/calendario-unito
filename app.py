@@ -65,7 +65,15 @@ def health():
 @app.route('/')
 def index():
     """Pagina principale"""
-    return render_template('index.html')
+    print("🏠 Index route called")
+    try:
+        print("📄 Rendering template...")
+        result = render_template('index.html')
+        print("✅ Template rendered successfully")
+        return result
+    except Exception as e:
+        print(f"❌ Error rendering template: {e}")
+        return f"Error: {e}", 500
 
 
 @app.route('/api/analyze_calendar', methods=['POST'])
@@ -74,12 +82,14 @@ def analyze_calendar():
     Analizza il calendario dall'URL fornito e restituisce i corsi disponibili
     """
     try:
+        print("🔍 Starting calendar analysis...")
         data = request.get_json()
         calendar_url = data.get('calendar_url', '').strip()
         
         if not calendar_url:
             return jsonify({'error': 'URL del calendario richiesto'}), 400
         
+        print(f"📅 Processing URL: {calendar_url}")
         # Crea manager temporaneo
         manager = UniversityCalendarManager(calendar_url)
         
@@ -88,16 +98,19 @@ def analyze_calendar():
         if not calendar_data:
             return jsonify({'error': 'Impossibile scaricare il calendario dall\'URL fornito'}), 400
         
+        print(f"📄 Downloaded {len(calendar_data)} characters")
         # Parsifica il calendario
         calendar = manager.parse_calendar(calendar_data)
         if not calendar:
             return jsonify({'error': 'Formato calendario non valido'}), 400
         
+        print("📋 Calendar parsed successfully")
         # Estrai i corsi
         courses = manager.extract_courses(calendar)
         if not courses:
             return jsonify({'error': 'Nessun corso trovato nel calendario'}), 400
         
+        print(f"🎓 Found {len(courses)} courses")
         # Prepara i dati per la risposta
         courses_list = []
         for course_name, events in courses.items():
@@ -114,9 +127,11 @@ def analyze_calendar():
         # Salva temporaneamente i dati del calendario per uso successivo
         session_id = hashlib.md5(calendar_url.encode()).hexdigest()
         temp_file = os.path.join(UPLOAD_FOLDER, f'{session_id}_calendar.txt')
+        print(f"💾 Saving to: {temp_file}")
         with open(temp_file, 'w', encoding='utf-8') as f:
             f.write(calendar_data)
         
+        print("✅ Analysis complete")
         return jsonify({
             'success': True,
             'courses': courses_list,
