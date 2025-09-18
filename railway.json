@@ -5,6 +5,7 @@
   },
   "deploy": {
     "startCommand": "python simple_app.py",
+    "healthcheckPath": "/health",
     "runtime": "V2",
     "numReplicas": 1,
     "sleepApplication": false,

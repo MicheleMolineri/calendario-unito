@@ -19,10 +19,11 @@ def ping():
 @app.route('/health')
 def health():
     print("Request received on /health")
-    return {'status': 'ok'}, 200
+    return {'status': 'ok', 'timestamp': '2025-09-18'}, 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 8080))  # Cambiamo porta default
     print(f"Starting server on port {port}")
     print(f"PORT env var: {os.environ.get('PORT')}")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    print(f"Binding to 0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=True, threaded=True)
