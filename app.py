@@ -6,6 +6,8 @@ Interfaccia web moderna per selezionare e filtrare i corsi
 
 from flask import Flask, render_template, request, jsonify, send_file
 import os
+import json
+import base64
 from datetime import datetime
 import hashlib
 from calendar_manager import UniversityCalendarManager
@@ -129,6 +131,102 @@ def download_calendar(session_id):
         download_name=f'calendario_unito_filtrato_{datetime.now().strftime("%Y%m%d")}.ics',
         mimetype='text/calendar'
     )
+
+@app.route('/api/create_permanent_link', methods=['POST'])
+def create_permanent_link():
+    """Crea link iCal permanente"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        calendar_url = data.get('calendar_url')
+        selected_courses = data.get('selected_courses', [])
+
+        if not all([session_id, calendar_url, selected_courses]):
+            return jsonify({'error': 'Dati mancanti'}), 400
+
+        # Verifica che la sessione esista
+        temp_file = os.path.join(UPLOAD_FOLDER, f'{session_id}_calendar.txt')
+        if not os.path.exists(temp_file):
+            return jsonify({'error': 'Sessione scaduta'}), 400
+
+        # Genera URL di base
+        base_url = request.host_url.rstrip('/')
+
+        # Encoda la configurazione
+        cfg_payload = {
+            'session_id': session_id,
+            'url': calendar_url,
+            'corsi': selected_courses
+        }
+        cfg_str = json.dumps(cfg_payload, separators=(',', ':'))
+        cfg_enc = base64.urlsafe_b64encode(cfg_str.encode('utf-8')).decode('ascii').rstrip('=')
+
+        # Link iCal
+        ical_url = f"{base_url}/api/ical?cfg={cfg_enc}"
+        webcal_url = ical_url.replace('http://', 'webcal://').replace('https://', 'webcal://')
+
+        return jsonify({
+            'success': True,
+            'ical_url': ical_url,
+            'webcal_url': webcal_url
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ical')
+def serve_ical():
+    """Servi calendario iCal aggiornato"""
+    try:
+        cfg_param = request.args.get('cfg')
+        if not cfg_param:
+            return "Configurazione mancante", 400
+
+        # Decodifica configurazione
+        try:
+            cfg_json = base64.urlsafe_b64decode(cfg_param + '===').decode('utf-8')
+            cfg = json.loads(cfg_json)
+            session_id = cfg.get('session_id')
+            calendar_url = cfg.get('url')
+            selected_courses = cfg.get('corsi', [])
+        except Exception as e:
+            return f"Configurazione non valida: {e}", 400
+
+        if not all([session_id, calendar_url, selected_courses]):
+            return "Parametri mancanti nella configurazione", 400
+
+        # Verifica sessione
+        temp_file = os.path.join(UPLOAD_FOLDER, f'{session_id}_calendar.txt')
+        if os.path.exists(temp_file):
+            # Usa il calendario salvato in sessione
+            with open(temp_file, 'r', encoding='utf-8') as f:
+                calendar_data = f.read()
+        else:
+            # Scarica calendario fresco
+            manager = UniversityCalendarManager(calendar_url)
+            calendar_data = manager.download_calendar()
+            if not calendar_data:
+                return "Impossibile scaricare calendario", 502
+
+        # Processa calendario
+        manager = UniversityCalendarManager(calendar_url)
+        calendar = manager.parse_calendar(calendar_data)
+        if not calendar:
+            return "Formato calendario non valido", 400
+
+        filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
+
+        # Servi calendario
+        data = filtered_calendar.to_ical()
+        response = app.response_class(
+            data,
+            mimetype='text/calendar; charset=utf-8'
+        )
+        response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600')
+        return response
+
+    except Exception as e:
+        return f"Errore: {str(e)}", 500
 
 @app.route('/health')
 def health():
