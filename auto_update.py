@@ -3,7 +3,7 @@
 Script per l'aggiornamento automatico del calendario universitario
 Può essere eseguito periodicamente (es. con cron) per mantenere
 il calendario sempre aggiornato
-"""
+""" 
 
 import os
 import sys

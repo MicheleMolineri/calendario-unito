@@ -1,5 +1,19 @@
-#!/usr/bin/env python3
-"""
+#!/usr/bin/env app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISS!MI!ZZIMà@')
+CORS(app)
+
+# Configurazione per Railway e altri ambienti
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'temp_calendars')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Crea cartella se non esiste
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Configurazione server
+PORT = int(os.environ.get('PORT', 5001))
+HOST = os.environ.get('HOST', '0.0.0.0')
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 Applicazione Flask per la gestione del calendario universitario
 Interfaccia web moderna per selezionare e filtrare i corsi
 """
@@ -13,8 +27,15 @@ from datetime import datetime
 import hashlib
 from calendar_manager import UniversityCalendarManager
 
+# Carica variabili d'ambiente da .env se presente (solo per sviluppo)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv non installato, usa solo variabili d'ambiente di sistema
+
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'  # Cambia in produzione
+app.secret_key = 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISSIMISS!MI!ZZIMà@' 
 CORS(app)
 
 # Configurazione
@@ -172,21 +193,72 @@ def download_calendar(session_id):
 def ical_link(session_id):
     """
     Link iCal per sottoscrizione automatica del calendario
+    Controlla automaticamente se ci sono aggiornamenti prima di servire il file
     """
     try:
         filename = f'{session_id}_filtered.ics'
         file_path = os.path.join(UPLOAD_FOLDER, filename)
-        
+        config_file = os.path.join(UPLOAD_FOLDER, f'{session_id}_config.json')
+
+        # Se esiste la configurazione permanente, controlla aggiornamenti
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+
+                calendar_url = config.get('calendar_url')
+                selected_courses = config.get('selected_courses', [])
+                last_update = config.get('last_update')
+
+                # Controlla se è passato più di 1 ora dall'ultimo aggiornamento
+                if last_update:
+                    last_update_time = datetime.fromisoformat(last_update)
+                    time_diff = datetime.now() - last_update_time
+
+                    if time_diff.total_seconds() > 3600:  # 1 ora
+                        print(f"Controllo aggiornamenti per sessione {session_id}...")
+
+                        # Crea manager e controlla aggiornamenti
+                        manager = UniversityCalendarManager(calendar_url)
+                        calendar_data = manager.download_calendar()
+
+                        if calendar_data:
+                            # Calcola hash del nuovo calendario
+                            current_hash = hashlib.md5(calendar_data.encode('utf-8')).hexdigest()
+                            saved_hash = config.get('calendar_hash')
+
+                            if current_hash != saved_hash:
+                                print(f"Aggiornamento rilevato per sessione {session_id}, rigenero calendario...")
+
+                                # Parsifica e crea calendario aggiornato
+                                calendar = manager.parse_calendar(calendar_data)
+                                if calendar:
+                                    filtered_calendar = manager.create_filtered_calendar(calendar, selected_courses)
+
+                                    # Salva calendario aggiornato
+                                    with open(file_path, 'wb') as f:
+                                        f.write(filtered_calendar.to_ical())
+
+                                    # Aggiorna configurazione
+                                    config['calendar_hash'] = current_hash
+                                    config['last_update'] = datetime.now().isoformat()
+                                    with open(config_file, 'w', encoding='utf-8') as f:
+                                        json.dump(config, f, indent=2, ensure_ascii=False)
+
+                                    print(f"Calendario aggiornato per sessione {session_id}")
+            except Exception as e:
+                print(f"Errore durante controllo aggiornamenti per {session_id}: {e}")
+
         if not os.path.exists(file_path):
             return jsonify({'error': 'Calendario non trovato'}), 404
-        
+
         # Serve il file ICS direttamente per la sottoscrizione
         return send_file(
             file_path,
             mimetype='text/calendar',
             as_attachment=False  # Non come download ma come contenuto diretto
         )
-        
+
     except Exception as e:
         return jsonify({'error': f'Errore nel servire il calendario: {str(e)}'}), 500
 
@@ -346,7 +418,7 @@ def cleanup_temp_files():
 if __name__ == '__main__':
     print("🚀 Avvio del server Flask...")
     print("📅 Gestore Calendario Universitario")
-    print("🌐 Accedi a: http://localhost:5001")
+    print(f"🌐 Server attivo su: http://{HOST}:{PORT}")
     print("📝 Premi Ctrl+C per fermare il server")
     
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=DEBUG, host=HOST, port=PORT)
