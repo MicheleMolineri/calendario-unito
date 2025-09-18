@@ -25,7 +25,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMI
 CORS(app)
 
 # Configurazione per Railway e altri ambienti
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/app/temp_calendars')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'temp_calendars'))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Crea cartella se non esiste (con gestione errori per Railway)
