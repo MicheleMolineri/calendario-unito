@@ -14,19 +14,28 @@ import hashlib
 from calendar_manager import UniversityCalendarManager
 
 # Carica variabili d'ambiente da .env se presente (solo per sviluppo)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # python-dotenv non installato, usa solo variabili d'ambiente di sistema
+# try:
+#     from dotenv import load_dotenv
+#     load_dotenv()
+# except ImportError:
+#     pass  # python-dotenv non installato, usa solo variabili d'ambiente di sistema
+
+print("🔧 Starting Flask app initialization...")
 
 app = Flask(__name__)
+print("✅ Flask app created")
 app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISS!MI!ZZIMà@')
+print("🔑 Secret key set")
+
 # CORS(app)  # Removed for Railway
 
+print("📁 Setting up upload folder...")
 # Configurazione per Railway e altri ambienti
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'temp_calendars'))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+print(f"📂 UPLOAD_FOLDER: {UPLOAD_FOLDER}")
+print(f"📍 Current working directory: {os.getcwd()}")
 
 # Crea cartella se non esiste (con gestione errori per Railway)
 try:
@@ -45,9 +54,10 @@ except Exception as e:
 
 # Print environment info for debugging
 print(f"🚀 Starting app on Railway")
-print(f"📁 UPLOAD_FOLDER: {UPLOAD_FOLDER}")
 print(f"🌐 PORT: {os.environ.get('PORT', 'Not set')}")
 print(f"🏠 Current working directory: {os.getcwd()}")
+
+print("🎯 Flask app initialization complete!")
 
 # Configurazione server (solo per sviluppo locale)
 if __name__ == '__main__':
@@ -71,21 +81,14 @@ def health():
 @app.route('/')
 def index():
     """Pagina principale"""
-    print("🏠 Index route called")
-    try:
-        print("📄 Rendering template...")
-        result = render_template('index.html')
-        print("✅ Template rendered successfully")
-        return result
-    except Exception as e:
-        print(f"❌ Error rendering template: {e}")
-        return f"Error: {e}", 500
+    print("🏠 Index route called - about to render template")
+    return "<h1>Hello from Railway!</h1><p>App is working!</p>"
 
 
 @app.route('/ping')
 def ping():
     """Simple ping endpoint"""
-    print("🏓 Ping received")
+    print("🏓 Ping received - returning pong")
     return 'pong', 200
 
 
