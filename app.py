@@ -82,6 +82,13 @@ def index():
         return f"Error: {e}", 500
 
 
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint"""
+    print("🏓 Ping received")
+    return 'pong', 200
+
+
 @app.route('/api/analyze_calendar', methods=['POST'])
 def analyze_calendar():
     """
