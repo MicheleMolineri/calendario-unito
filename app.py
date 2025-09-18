@@ -5,7 +5,7 @@ Interfaccia web moderna per selezionare e filtrare i corsi
 """
 
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, flash
-from flask_cors import CORS
+# from flask_cors import CORS  # Removed import
 import os
 import json
 import tempfile
@@ -42,6 +42,12 @@ except Exception as e:
     UPLOAD_FOLDER = tempfile.gettempdir()
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     print(f"🔄 Uso cartella temporanea: {UPLOAD_FOLDER}")
+
+# Print environment info for debugging
+print(f"🚀 Starting app on Railway")
+print(f"📁 UPLOAD_FOLDER: {UPLOAD_FOLDER}")
+print(f"🌐 PORT: {os.environ.get('PORT', 'Not set')}")
+print(f"🏠 Current working directory: {os.getcwd()}")
 
 # Configurazione server (solo per sviluppo locale)
 if __name__ == '__main__':
