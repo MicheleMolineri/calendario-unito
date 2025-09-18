@@ -25,12 +25,23 @@ app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMI
 CORS(app)
 
 # Configurazione per Railway e altri ambienti
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'temp_calendars')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/app/temp_calendars')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Crea cartella se non esiste
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+# Crea cartella se non esiste (con gestione errori per Railway)
+try:
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        print(f"✅ Cartella creata: {UPLOAD_FOLDER}")
+    else:
+        print(f"✅ Cartella esistente: {UPLOAD_FOLDER}")
+except Exception as e:
+    print(f"⚠️  Errore creazione cartella {UPLOAD_FOLDER}: {e}")
+    # Fallback alla cartella temporanea del sistema
+    import tempfile
+    UPLOAD_FOLDER = tempfile.gettempdir()
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    print(f"🔄 Uso cartella temporanea: {UPLOAD_FOLDER}")
 
 # Configurazione server
 PORT = int(os.environ.get('PORT', 5001))

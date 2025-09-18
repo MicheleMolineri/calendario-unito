@@ -5,5 +5,5 @@ WSGI entry point per Railway
 
 from app import app
 
-if __name__ == "__main__":
-    app.run()
+# Non chiamare app.run() quando usato con Gunicorn
+# Gunicorn gestisce il server WSGI direttamente
