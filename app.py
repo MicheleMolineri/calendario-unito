@@ -22,7 +22,7 @@ except ImportError:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'CHIAVE_SEGRETISSIMISIMISSIMISSIMISSIMISS!MI!ZZIMà@')
-CORS(app)
+# CORS(app)  # Removed for Railway
 
 # Configurazione per Railway e altri ambienti
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'temp_calendars'))
@@ -56,6 +56,11 @@ if __name__ == '__main__':
     
     app.run(debug=DEBUG, host=HOST, port=PORT)
 
+
+@app.route('/health')
+def health():
+    """Health check"""
+    return 'OK'
 
 @app.route('/')
 def index():
