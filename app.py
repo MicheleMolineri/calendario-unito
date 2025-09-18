@@ -43,10 +43,18 @@ except Exception as e:
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     print(f"🔄 Uso cartella temporanea: {UPLOAD_FOLDER}")
 
-# Configurazione server
-PORT = int(os.environ.get('PORT', 5001))
-HOST = os.environ.get('HOST', '0.0.0.0')
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+# Configurazione server (solo per sviluppo locale)
+if __name__ == '__main__':
+    PORT = int(os.environ.get('PORT', 5001))
+    HOST = os.environ.get('HOST', '0.0.0.0')
+    DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    print("🚀 Avvio del server Flask...")
+    print("📅 Gestore Calendario Universitario")
+    print(f"🌐 Server attivo su: http://{HOST}:{PORT}")
+    print("📝 Premi Ctrl+C per fermare il server")
+    
+    app.run(debug=DEBUG, host=HOST, port=PORT)
 
 
 @app.route('/')
