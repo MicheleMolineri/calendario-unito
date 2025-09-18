@@ -190,7 +190,7 @@
                 </div>
                 <div class="step" id="step-3">
                     <div class="step-number">3</div>
-                    <span>Scarica Calendario</span>
+                    <span>Crea Link iCal</span>
                 </div>
             </div>
             
@@ -269,7 +269,7 @@
                             <i class="bi bi-x-square"></i> Deseleziona Tutti
                         </button>
                         <button type="button" class="btn btn-success btn-custom" onclick="generateCalendar()" id="generate-btn" disabled>
-                            <i class="bi bi-calendar-check"></i> Genera Calendario
+                            <i class="bi bi-link-45deg"></i> Crea Link iCal Automatico
                         </button>
                     </div>
                     
@@ -279,13 +279,15 @@
                     </div>
                 </div>
                 
-                <!-- Download Section -->
+                <!-- iCal Link Section -->
                 <div class="download-section" id="download-section">
-                    <h3 class="mb-3"><i class="bi bi-download"></i> Calendario Pronto!</h3>
-                    <p class="lead">Il tuo calendario personalizzato è stato generato con successo.</p>
+                    <h3 class="mb-3"><i class="bi bi-link-45deg"></i> Link iCal Sempre Aggiornato</h3>
+                    <p class="lead">Il tuo calendario personalizzato sarà sempre sincronizzato con gli aggiornamenti del sito UNITO.</p>
                     
                     <!-- Download Options -->
                     <div class="row mb-4">
+                        <!-- Sezione Download ICS nascosta -->
+                        <!--
                         <div class="col-md-6">
                             <div class="card bg-light border-0">
                                 <div class="card-body text-center">
@@ -298,14 +300,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light border-0">
+                        -->
+                        <div class="col-md-12">
+                            <div class="card bg-success bg-opacity-10 border-success">
                                 <div class="card-body text-center">
                                     <i class="bi bi-link-45deg h2 text-success"></i>
-                                    <h5>Link iCal</h5>
-                                    <p class="small">Sottoscrivi al calendario per aggiornamenti automatici</p>
-                                    <button type="button" class="btn btn-success btn-custom" onclick="createPermanentLink()">
-                                        <i class="bi bi-link"></i> Crea Link iCal
+                                    <h5>🔄 Link iCal Sempre Aggiornato</h5>
+                                    <p class="small text-success fw-bold">
+                                        <i class="bi bi-check-circle-fill"></i> 
+                                        Il calendario si aggiorna automaticamente ogni 24 ore con le modifiche dal sito UNITO
+                                    </p>
+                                    <button type="button" class="btn btn-success btn-custom btn-lg" onclick="createPermanentLink()">
+                                        <i class="bi bi-link"></i> Crea Link iCal Automatico
                                     </button>
                                 </div>
                             </div>
@@ -314,7 +320,13 @@
                     
                     <!-- iCal Link Display -->
                     <div class="alert alert-success d-none" id="ical-info">
-                        <h6><i class="bi bi-check-circle"></i> Link iCal Creato!</h6>
+                        <h6><i class="bi bi-check-circle-fill"></i> 🎉 Link iCal Sempre Aggiornato Creato!</h6>
+                        <div class="alert alert-info alert-modern mb-3">
+                            <strong>🔄 Come funziona l'aggiornamento:</strong><br>
+                            • Il calendario scarica la versione più recente dal sito UNITO <br>
+                            • Le tue app calendario ricevono gli aggiornamenti automaticamente<br>
+                            • Per refresh immediato: usa il link refresh quando modifichi eventi
+                        </div>
                         <div class="mb-3">
                             <label class="form-label"><strong>Link iCal (HTTP):</strong></label>
                             <div class="input-group">
@@ -359,10 +371,17 @@
                         </button>
                     </div>
                     <div class="mt-4">
-                        <small>
-                            <i class="bi bi-info-circle"></i> 
-                            Il link iCal mantiene il calendario sempre aggiornato automaticamente.
-                        </small>
+                        <div class="alert alert-info alert-modern">
+                            <h6><i class="bi bi-info-circle-fill text-primary"></i> 🔄 Aggiornamento Automatico</h6>
+                            <p class="mb-2">
+                                <strong>Il tuo calendario si aggiorna automaticamente:</strong>
+                            </p>
+                            <ul class="mb-0 small">
+                                <li>✅ <strong>Aggiornamento giornaliero</strong>: Scarica automaticamente ogni 24 ore</li>
+                                <li>⏰ <strong>Cache ottimizzata</strong>: 24 ore di cache per ridurre il traffico</li>
+                                <li>🔄 <strong>Refresh forzato</strong>: Usa <code>/api/ical/refresh/&lt;cfg&gt;</code> per aggiornamenti immediati</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 
@@ -574,15 +593,15 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Aggiorna il link di download
-                    const downloadBtn = document.getElementById('download-btn');
-                    downloadBtn.href = data.download_url;
-                    
+                    // Salta direttamente alla creazione del link iCal
                     updateStepIndicator(3);
                     
                     // Nascondi loading e mostra download
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('download-section').style.display = 'block';
+                    
+                    // Crea automaticamente il link iCal
+                    await createPermanentLink();
                 } else {
                     throw new Error(data.error || 'Errore durante la generazione');
                 }

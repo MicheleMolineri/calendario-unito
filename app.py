@@ -8,9 +8,29 @@ from flask import Flask, render_template, request, jsonify, send_file, redirect
 import os
 import json
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
+import time
 from calendar_manager import UniversityCalendarManager
+
+# Cache per i calendari scaricati (24 ore)
+CALENDAR_CACHE = {}
+CACHE_DURATION = 24 * 60 * 60  # 24 ore in secondi
+
+def download_and_cache_calendar(calendar_url, cache_key):
+    """Scarica calendario e lo salva in cache"""
+    manager = UniversityCalendarManager(calendar_url)
+    calendar_data = manager.download_calendar()
+    
+    if calendar_data:
+        # Salva in cache
+        CALENDAR_CACHE[cache_key] = {
+            'data': calendar_data,
+            'timestamp': time.time(),
+            'url': calendar_url
+        }
+    
+    return calendar_data
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
@@ -195,14 +215,30 @@ def serve_ical():
         if not all([session_id, calendar_url, selected_courses]):
             return "Parametri mancanti nella configurazione", 400
 
-        # Scarica sempre calendario fresco (non usare cache sessione)
-        print(f"Downloading fresh calendar from: {calendar_url}")
-        manager = UniversityCalendarManager(calendar_url)
-        calendar_data = manager.download_calendar()
+        # Controlla cache o scarica calendario fresco
+        current_time = time.time()
+        cache_key = hashlib.md5(calendar_url.encode()).hexdigest()
+        
+        # Verifica se abbiamo una versione in cache valida (meno di 24 ore)
+        if cache_key in CALENDAR_CACHE:
+            cached_data = CALENDAR_CACHE[cache_key]
+            if current_time - cached_data['timestamp'] < CACHE_DURATION:
+                print(f"Using cached calendar for: {calendar_url}")
+                calendar_data = cached_data['data']
+            else:
+                # Cache scaduta, scarica nuovo calendario
+                print(f"Cache expired, downloading fresh calendar from: {calendar_url}")
+                calendar_data = download_and_cache_calendar(calendar_url, cache_key)
+        else:
+            # Nessuna cache, scarica nuovo calendario
+            print(f"No cache found, downloading fresh calendar from: {calendar_url}")
+            calendar_data = download_and_cache_calendar(calendar_url, cache_key)
+        
         if not calendar_data:
             return "Impossibile scaricare calendario", 502
 
         # Processa calendario
+        manager = UniversityCalendarManager(calendar_url)
         calendar = manager.parse_calendar(calendar_data)
         if not calendar:
             return "Formato calendario non valido", 400
@@ -215,8 +251,8 @@ def serve_ical():
             data,
             mimetype='text/calendar; charset=utf-8'
         )
-        # Cache minima per aggiornamenti rapidi
-        response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300')  # 5 minuti
+        # Cache più lunga per ridurre le richieste (24 ore)
+        response.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=86400')  # 24 ore
         response.headers.set('ETag', hashlib.md5(data).hexdigest())
         response.headers.set('Last-Modified', datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT'))
         return response
