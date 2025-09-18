@@ -4,7 +4,7 @@ Applicazione Flask per la gestione del calendario universitario
 Interfaccia web moderna per selezionare e filtrare i corsi
 """
 
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect
 import os
 import json
 import base64
@@ -195,21 +195,14 @@ def serve_ical():
         if not all([session_id, calendar_url, selected_courses]):
             return "Parametri mancanti nella configurazione", 400
 
-        # Verifica sessione
-        temp_file = os.path.join(UPLOAD_FOLDER, f'{session_id}_calendar.txt')
-        if os.path.exists(temp_file):
-            # Usa il calendario salvato in sessione
-            with open(temp_file, 'r', encoding='utf-8') as f:
-                calendar_data = f.read()
-        else:
-            # Scarica calendario fresco
-            manager = UniversityCalendarManager(calendar_url)
-            calendar_data = manager.download_calendar()
-            if not calendar_data:
-                return "Impossibile scaricare calendario", 502
+        # Scarica sempre calendario fresco (non usare cache sessione)
+        print(f"Downloading fresh calendar from: {calendar_url}")
+        manager = UniversityCalendarManager(calendar_url)
+        calendar_data = manager.download_calendar()
+        if not calendar_data:
+            return "Impossibile scaricare calendario", 502
 
         # Processa calendario
-        manager = UniversityCalendarManager(calendar_url)
         calendar = manager.parse_calendar(calendar_data)
         if not calendar:
             return "Formato calendario non valido", 400
@@ -222,9 +215,22 @@ def serve_ical():
             data,
             mimetype='text/calendar; charset=utf-8'
         )
-        response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600')
+        # Cache minima per aggiornamenti rapidi
+        response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300')  # 5 minuti
+        response.headers.set('ETag', hashlib.md5(data).hexdigest())
+        response.headers.set('Last-Modified', datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT'))
         return response
 
+    except Exception as e:
+        print(f"Error serving iCal: {e}")
+        return f"Errore: {str(e)}", 500
+
+@app.route('/api/ical/refresh/<path:cfg>')
+def force_refresh_ical(cfg):
+    """Forza aggiornamento calendario iCal"""
+    try:
+        # Reindirizza all'endpoint normale con parametro refresh
+        return redirect(f'/api/ical?cfg={cfg}&refresh=true')
     except Exception as e:
         return f"Errore: {str(e)}", 500
 
